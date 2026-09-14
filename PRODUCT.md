@@ -99,10 +99,12 @@ flowchart LR
 - **Leading:** share of data asks covered by an approved value offer; median time from draft to approved offer; fulfilment success rate within 24 hours of consent.
 - **Lagging:** net lawful opt-in rate on covered journeys; revoke rate after offer launch; incremental retention or conversion versus control journeys; reduction in third-party-sale complaints.
 
-## OpenAPI skeleton
+## OpenAPI
 
-Canonical HTTP surface lives in sibling [openapi.yaml](openapi.yaml). Summary:
+Canonical HTTP surface lives under [`packages/openapi-core/src/`](packages/openapi-core/src/) — **one YAML file per domain** (`journeys`, `offers`, `consents`, `fulfilments`, `incidents`, `reporting`, plus scaffold `identity` and `common/`). Bundle via Redocly (`.redocly.yaml`).
 
-- **Base path:** `/v1/...`
-- **Auth:** `X-API-Key` for journey/fulfilment integrations; Bearer JWT for operators.
-- **Resource groups:** Journeys, Offers, Consents, Fulfilments, Incidents, Reporting.
+Summary:
+
+- **Base path:** `/v1/...` (product); identity remains `/v0/...`
+- **Auth:** `X-API-Key` (tenant implied); operator session stubs under identity `/v0/auth/*`
+- **Domains:** Journeys, Offers (+ Approvals), Consents, Fulfilments, Incidents, Reporting

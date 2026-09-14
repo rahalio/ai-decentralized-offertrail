@@ -1,0 +1,135 @@
+openapi: 3.1.0
+info:
+  title: Reporting schemas
+  version: 0.1.0
+  description: Journey offer analytics and audit export statements.
+paths: {}
+components:
+  schemas:
+    OfferContribution:
+      type: object
+      required: [offerId]
+      properties:
+        offerId:
+          type: string
+          pattern: '^ofr_[0-9A-HJKMNP-TV-Z]{26}$'
+        offerName:
+          type: string
+        optIns:
+          type: integer
+          minimum: 0
+        revocations:
+          type: integer
+          minimum: 0
+        fulfilments:
+          type: integer
+          minimum: 0
+        netLawfulSharing:
+          type: integer
+          description: optIns minus revocations for the period.
+
+    OfferPerformanceReport:
+      type: object
+      required: [period, optInRate, revokeRate, fulfilmentRate24h, offers]
+      properties:
+        journeyId:
+          type: string
+          pattern: '^jrn_[0-9A-HJKMNP-TV-Z]{26}$'
+        period:
+          type: string
+          example: 2026-Q1
+        optInRate:
+          type: number
+          format: float
+        revokeRate:
+          type: number
+          format: float
+        fulfilmentRate24h:
+          type: number
+          format: float
+        offers:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfferContribution'
+
+    AuditStatement:
+      type: object
+      required: [period, generatedAt, offers, netNewLawfulSharing, netRevocations]
+      properties:
+        period:
+          type: string
+        journeyId:
+          type: string
+          pattern: '^jrn_[0-9A-HJKMNP-TV-Z]{26}$'
+        generatedAt:
+          type: string
+          format: date-time
+        netNewLawfulSharing:
+          type: integer
+        netRevocations:
+          type: integer
+        offers:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfferContribution'
+        exportFormat:
+          type: string
+          enum: [json, csv]
+          default: json
+
+    JourneyCompareRow:
+      type: object
+      required: [journeyId, journeyName, optInRate, revokeRate, fulfilmentRate24h]
+      properties:
+        journeyId:
+          type: string
+          pattern: '^jrn_[0-9A-HJKMNP-TV-Z]{26}$'
+        journeyName:
+          type: string
+        optInRate:
+          type: number
+          format: float
+        revokeRate:
+          type: number
+          format: float
+        fulfilmentRate24h:
+          type: number
+          format: float
+
+    JourneyCompareReport:
+      type: object
+      required: [period, journeys]
+      properties:
+        period:
+          type: string
+        journeys:
+          type: array
+          items:
+            $ref: '#/components/schemas/JourneyCompareRow'
+
+    OfferPerformanceResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/OfferPerformanceReport'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    AuditStatementResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/AuditStatement'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    JourneyCompareResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/JourneyCompareReport'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

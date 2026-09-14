@@ -1,0 +1,11 @@
+---
+description: Never commit or push the .codegen directory
+alwaysApply: true
+---
+
+# `.codegen` must never be committed
+
+- Do **not** stage, commit, or push `.codegen/` (or any vendored `zero_codegen` tree under it).
+- `.codegen/` is local tooling only; it is listed in `.gitignore`.
+- If asked to commit and `.codegen` appears in status, leave it untracked — never force-add it.
+- Teammates obtain the codegen tool by copying from the scaffold or an approved local source; it is not part of the GitHub history for this product.

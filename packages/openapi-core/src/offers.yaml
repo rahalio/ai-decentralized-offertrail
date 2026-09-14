@@ -1,0 +1,271 @@
+openapi: 3.1.0
+info:
+  title: Offers API
+  version: 0.1.0
+  description: |
+    Value offers bound to journeys — purpose, categories, retention, third-party
+    chooser, templates, and cross-functional approval (BR-1, BR-2, BR-5, BR-6).
+  license:
+    name: Proprietary
+    url: https://offertrail.local/license
+  x-domain: ofr
+servers:
+  - url: https://api.offertrail.local
+security:
+  - apiKey: []
+tags:
+  - name: Offers
+    description: Catalogue, editor, versions, and templates
+  - name: Approvals
+    description: Cross-functional approval queue
+paths:
+  /v1/offers:
+    get:
+      operationId: listOffers
+      tags: [Offers]
+      summary: List offers
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: journeyId
+          in: query
+          schema:
+            type: string
+            pattern: '^jrn_[0-9A-HJKMNP-TV-Z]{26}$'
+        - name: status
+          in: query
+          schema:
+            $ref: ./offers.schemas.yaml#/components/schemas/OfferStatus
+      responses:
+        '200':
+          description: Offers page
+          content:
+            application/json:
+              schema:
+                $ref: ./offers.schemas.yaml#/components/schemas/OfferListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: createOffer
+      tags: [Offers]
+      summary: Create offer draft
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./offers.schemas.yaml#/components/schemas/OfferCreate
+      responses:
+        '201':
+          description: Offer draft created
+          content:
+            application/json:
+              schema:
+                $ref: ./offers.schemas.yaml#/components/schemas/OfferResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/offers/{offerId}:
+    parameters:
+      - name: offerId
+        in: path
+        required: true
+        schema:
+          $ref: ./offers.schemas.yaml#/components/schemas/OfferId
+    get:
+      operationId: getOffer
+      tags: [Offers]
+      summary: Get offer
+      responses:
+        '200':
+          description: Offer
+          content:
+            application/json:
+              schema:
+                $ref: ./offers.schemas.yaml#/components/schemas/OfferResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    patch:
+      operationId: updateOffer
+      tags: [Offers]
+      summary: Update draft offer (creates a new version snapshot)
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./offers.schemas.yaml#/components/schemas/OfferUpdate
+      responses:
+        '200':
+          description: Offer updated
+          content:
+            application/json:
+              schema:
+                $ref: ./offers.schemas.yaml#/components/schemas/OfferResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        '409':
+          $ref: ./common/responses.yaml#/components/responses/Conflict
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/offers/{offerId}/versions:
+    parameters:
+      - name: offerId
+        in: path
+        required: true
+        schema:
+          $ref: ./offers.schemas.yaml#/components/schemas/OfferId
+    get:
+      operationId: listOfferVersions
+      tags: [Offers]
+      summary: List offer version history
+      responses:
+        '200':
+          description: Versions
+          content:
+            application/json:
+              schema:
+                $ref: ./offers.schemas.yaml#/components/schemas/OfferVersionListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/offers/{offerId}/submit-approval:
+    parameters:
+      - name: offerId
+        in: path
+        required: true
+        schema:
+          $ref: ./offers.schemas.yaml#/components/schemas/OfferId
+    post:
+      operationId: submitOfferForApproval
+      tags: [Offers]
+      summary: Move draft offer to pending_approval
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      responses:
+        '200':
+          description: Submitted for approval
+          content:
+            application/json:
+              schema:
+                $ref: ./offers.schemas.yaml#/components/schemas/OfferResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/UnprocessableEntity
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/offers/{offerId}/approval:
+    parameters:
+      - name: offerId
+        in: path
+        required: true
+        schema:
+          $ref: ./offers.schemas.yaml#/components/schemas/OfferId
+    post:
+      operationId: recordOfferApproval
+      tags: [Approvals]
+      summary: Record business, privacy, or technology decision
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./offers.schemas.yaml#/components/schemas/OfferApprovalRequest
+      responses:
+        '200':
+          description: Approval recorded; offer may go live when all three approve
+          content:
+            application/json:
+              schema:
+                $ref: ./offers.schemas.yaml#/components/schemas/ApprovalRecordResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/approvals:
+    get:
+      operationId: listPendingApprovals
+      tags: [Approvals]
+      summary: List offers pending cross-functional approval
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: role
+          in: query
+          schema:
+            $ref: ./offers.schemas.yaml#/components/schemas/ApprovalRole
+      responses:
+        '200':
+          description: Pending approval queue (offers as ApprovalRecord stubs or offer list via offers filter)
+          content:
+            application/json:
+              schema:
+                $ref: ./offers.schemas.yaml#/components/schemas/OfferListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/offers/{offerId}/approvals:
+    parameters:
+      - name: offerId
+        in: path
+        required: true
+        schema:
+          $ref: ./offers.schemas.yaml#/components/schemas/OfferId
+    get:
+      operationId: listOfferApprovals
+      tags: [Approvals]
+      summary: List approval decision log for an offer
+      responses:
+        '200':
+          description: Approval trail
+          content:
+            application/json:
+              schema:
+                $ref: ./offers.schemas.yaml#/components/schemas/ApprovalListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

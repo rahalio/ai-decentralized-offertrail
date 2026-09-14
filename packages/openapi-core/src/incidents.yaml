@@ -1,0 +1,165 @@
+openapi: 3.1.0
+info:
+  title: Incidents API
+  version: 0.1.0
+  description: |
+    Trust-incident controls — pause and resume classes of offers during
+    breach/trust recovery (BR-7).
+  license:
+    name: Proprietary
+    url: https://offertrail.local/license
+  x-domain: inc
+servers:
+  - url: https://api.offertrail.local
+security:
+  - apiKey: []
+tags:
+  - name: Incidents
+    description: Trust incidents and offer pauses
+paths:
+  /v1/incidents:
+    get:
+      operationId: listTrustIncidents
+      tags: [Incidents]
+      summary: List trust incidents
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: status
+          in: query
+          schema:
+            $ref: ./incidents.schemas.yaml#/components/schemas/IncidentStatus
+      responses:
+        '200':
+          description: Incidents page
+          content:
+            application/json:
+              schema:
+                $ref: ./incidents.schemas.yaml#/components/schemas/IncidentListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: declareTrustIncident
+      tags: [Incidents]
+      summary: Declare a trust incident
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./incidents.schemas.yaml#/components/schemas/TrustIncidentCreate
+      responses:
+        '201':
+          description: Incident declared
+          content:
+            application/json:
+              schema:
+                $ref: ./incidents.schemas.yaml#/components/schemas/IncidentResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/incidents/{incidentId}:
+    parameters:
+      - name: incidentId
+        in: path
+        required: true
+        schema:
+          $ref: ./incidents.schemas.yaml#/components/schemas/IncidentId
+    get:
+      operationId: getTrustIncident
+      tags: [Incidents]
+      summary: Get trust incident
+      responses:
+        '200':
+          description: Incident
+          content:
+            application/json:
+              schema:
+                $ref: ./incidents.schemas.yaml#/components/schemas/IncidentResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/incidents/{incidentId}/pause-offers:
+    parameters:
+      - name: incidentId
+        in: path
+        required: true
+        schema:
+          $ref: ./incidents.schemas.yaml#/components/schemas/IncidentId
+    post:
+      operationId: pauseOffersForIncident
+      tags: [Incidents]
+      summary: Pause offer class during trust recovery
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./incidents.schemas.yaml#/components/schemas/PauseOffersRequest
+      responses:
+        '202':
+          description: Pause accepted
+          content:
+            application/json:
+              schema:
+                $ref: ./incidents.schemas.yaml#/components/schemas/IncidentResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/incidents/{incidentId}/resume-offers:
+    parameters:
+      - name: incidentId
+        in: path
+        required: true
+        schema:
+          $ref: ./incidents.schemas.yaml#/components/schemas/IncidentId
+    post:
+      operationId: resumeOffersForIncident
+      tags: [Incidents]
+      summary: Resume paused offers after recovery (requires confirm)
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./incidents.schemas.yaml#/components/schemas/ResumeOffersRequest
+      responses:
+        '202':
+          description: Resume accepted
+          content:
+            application/json:
+              schema:
+                $ref: ./incidents.schemas.yaml#/components/schemas/IncidentResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/UnprocessableEntity
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

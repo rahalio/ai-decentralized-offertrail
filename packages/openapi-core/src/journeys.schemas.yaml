@@ -1,0 +1,114 @@
+openapi: 3.1.0
+info:
+  title: Journeys schemas
+  version: 0.1.0
+  description: Priority customer journeys (programme spine).
+paths: {}
+components:
+  schemas:
+    JourneyId:
+      type: string
+      pattern: '^jrn_[0-9A-HJKMNP-TV-Z]{26}$'
+      description: Prefixed journey id.
+
+    JourneyStatus:
+      type: string
+      enum: [draft, active, archived]
+
+    OrchestrationStatus:
+      type: string
+      enum: [not_connected, connected, degraded]
+      description: CRM/loyalty orchestration integration health.
+
+    Journey:
+      type: object
+      required: [id, name, status, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/JourneyId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        status:
+          $ref: '#/components/schemas/JourneyStatus'
+        owners:
+          type: array
+          items:
+            type: string
+          description: Operator user ids or emails for journey owners.
+        orchestrationStatus:
+          $ref: '#/components/schemas/OrchestrationStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    JourneyCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        owners:
+          type: array
+          items:
+            type: string
+
+    JourneyUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        owners:
+          type: array
+          items:
+            type: string
+        status:
+          $ref: '#/components/schemas/JourneyStatus'
+        orchestrationStatus:
+          $ref: '#/components/schemas/OrchestrationStatus'
+
+    JourneyListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Journey'
+        nextCursor:
+          type: string
+
+    JourneyResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Journey'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    JourneyListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/JourneyListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

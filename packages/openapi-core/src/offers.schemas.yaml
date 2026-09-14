@@ -1,0 +1,269 @@
+openapi: 3.1.0
+info:
+  title: Offers schemas
+  version: 0.1.0
+  description: Value offers, versions, templates, and cross-functional approvals.
+paths: {}
+components:
+  schemas:
+    OfferId:
+      type: string
+      pattern: '^ofr_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    OfferVersionId:
+      type: string
+      pattern: '^ovn_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    ApprovalId:
+      type: string
+      pattern: '^apr_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    OfferStatus:
+      type: string
+      enum: [draft, pending_approval, live, paused, retired]
+
+    ValueType:
+      type: string
+      enum: [discount, service_upgrade, choosable_third_party_share]
+
+    ThirdPartySharing:
+      type: string
+      enum: [excluded, optional]
+      description: Silent on-selling (required third-party) is not supported (BR-6).
+
+    ApprovalRole:
+      type: string
+      enum: [business, privacy, technology]
+
+    ApprovalDecision:
+      type: string
+      enum: [approved, rejected, change_requested]
+
+    Offer:
+      type: object
+      required:
+        - id
+        - journeyId
+        - name
+        - status
+        - valueType
+        - purpose
+        - dataCategories
+        - retentionIntent
+        - thirdPartySharing
+        - version
+        - createdAt
+      properties:
+        id:
+          $ref: '#/components/schemas/OfferId'
+        journeyId:
+          type: string
+          pattern: '^jrn_[0-9A-HJKMNP-TV-Z]{26}$'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+        valueType:
+          $ref: '#/components/schemas/ValueType'
+        valuePromise:
+          type: string
+          description: Consumer-facing tangible return copy.
+        purpose:
+          type: string
+        dataCategories:
+          type: array
+          items:
+            type: string
+        retentionIntent:
+          type: string
+          description: Declared retention intent for requested categories (BR-2).
+        thirdPartySharing:
+          $ref: '#/components/schemas/ThirdPartySharing'
+        templateKey:
+          type: string
+          description: Optional template pack key (birthday_reward, better_service, choosable_share).
+        version:
+          type: integer
+          minimum: 1
+        collectionFrozen:
+          type: boolean
+          description: True when fulfilment failure froze further collection.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    OfferCreate:
+      type: object
+      required: [journeyId, name, valueType, purpose, dataCategories, retentionIntent]
+      properties:
+        journeyId:
+          type: string
+          pattern: '^jrn_[0-9A-HJKMNP-TV-Z]{26}$'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        valueType:
+          $ref: '#/components/schemas/ValueType'
+        valuePromise:
+          type: string
+        purpose:
+          type: string
+        dataCategories:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        retentionIntent:
+          type: string
+        thirdPartySharing:
+          $ref: '#/components/schemas/ThirdPartySharing'
+        templateKey:
+          type: string
+
+    OfferUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        valuePromise:
+          type: string
+        purpose:
+          type: string
+        dataCategories:
+          type: array
+          items:
+            type: string
+        retentionIntent:
+          type: string
+        thirdPartySharing:
+          $ref: '#/components/schemas/ThirdPartySharing'
+
+    OfferVersion:
+      type: object
+      required: [id, offerId, version, snapshot, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/OfferVersionId'
+        offerId:
+          $ref: '#/components/schemas/OfferId'
+        version:
+          type: integer
+          minimum: 1
+        snapshot:
+          $ref: '#/components/schemas/Offer'
+        createdAt:
+          type: string
+          format: date-time
+
+    ApprovalRecord:
+      type: object
+      required: [id, offerId, role, decision, decidedAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/ApprovalId'
+        offerId:
+          $ref: '#/components/schemas/OfferId'
+        role:
+          $ref: '#/components/schemas/ApprovalRole'
+        decision:
+          $ref: '#/components/schemas/ApprovalDecision'
+        rationale:
+          type: string
+        decidedAt:
+          type: string
+          format: date-time
+        decidedBy:
+          type: string
+
+    OfferApprovalRequest:
+      type: object
+      required: [role, decision]
+      properties:
+        role:
+          $ref: '#/components/schemas/ApprovalRole'
+        decision:
+          $ref: '#/components/schemas/ApprovalDecision'
+        rationale:
+          type: string
+
+    OfferListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Offer'
+        nextCursor:
+          type: string
+
+    ApprovalListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalRecord'
+        nextCursor:
+          type: string
+
+    OfferVersionListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfferVersion'
+
+    OfferResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Offer'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    OfferListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/OfferListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    ApprovalRecordResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ApprovalRecord'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    ApprovalListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ApprovalListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    OfferVersionListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/OfferVersionListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

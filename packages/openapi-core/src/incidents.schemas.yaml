@@ -1,0 +1,110 @@
+openapi: 3.1.0
+info:
+  title: Incidents schemas
+  version: 0.1.0
+  description: Trust-incident controls and offer class pauses.
+paths: {}
+components:
+  schemas:
+    IncidentId:
+      type: string
+      pattern: '^inc_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    IncidentSeverity:
+      type: string
+      enum: [low, medium, high]
+
+    IncidentStatus:
+      type: string
+      enum: [open, mitigating, closed]
+
+    OfferPauseClass:
+      type: string
+      enum: [third_party_share, all_live]
+
+    TrustIncident:
+      type: object
+      required: [id, severity, status, summary, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/IncidentId'
+        severity:
+          $ref: '#/components/schemas/IncidentSeverity'
+        status:
+          $ref: '#/components/schemas/IncidentStatus'
+        summary:
+          type: string
+        linkedOfferIds:
+          type: array
+          items:
+            type: string
+            pattern: '^ofr_[0-9A-HJKMNP-TV-Z]{26}$'
+        pausedOfferClass:
+          $ref: '#/components/schemas/OfferPauseClass'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        closedAt:
+          type: string
+          format: date-time
+
+    TrustIncidentCreate:
+      type: object
+      required: [severity, summary]
+      properties:
+        severity:
+          $ref: '#/components/schemas/IncidentSeverity'
+        summary:
+          type: string
+          minLength: 1
+        linkedOfferIds:
+          type: array
+          items:
+            type: string
+            pattern: '^ofr_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    PauseOffersRequest:
+      type: object
+      required: [offerClass]
+      properties:
+        offerClass:
+          $ref: '#/components/schemas/OfferPauseClass'
+
+    ResumeOffersRequest:
+      type: object
+      properties:
+        confirm:
+          type: boolean
+          description: Must be true to resume after accidental-resume guard.
+
+    IncidentListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrustIncident'
+        nextCursor:
+          type: string
+
+    IncidentResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/TrustIncident'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    IncidentListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/IncidentListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

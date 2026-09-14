@@ -1,0 +1,168 @@
+openapi: 3.1.0
+info:
+  title: Fulfilments API
+  version: 0.1.0
+  description: |
+    Evidence that promised value was delivered against a consent event (BR-9).
+    Fulfilment failure can freeze further collection for the offer.
+  license:
+    name: Proprietary
+    url: https://offertrail.local/license
+  x-domain: ful
+servers:
+  - url: https://api.offertrail.local
+security:
+  - apiKey: []
+tags:
+  - name: Fulfilments
+    description: Consent↔fulfilment evidence and failure queue
+paths:
+  /v1/fulfilments:
+    get:
+      operationId: listFulfilments
+      tags: [Fulfilments]
+      summary: List fulfilment proofs (optional failure queue filter)
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: status
+          in: query
+          schema:
+            $ref: ./fulfilments.schemas.yaml#/components/schemas/FulfilmentStatus
+        - name: offerId
+          in: query
+          schema:
+            type: string
+            pattern: '^ofr_[0-9A-HJKMNP-TV-Z]{26}$'
+        - name: consentId
+          in: query
+          schema:
+            type: string
+            pattern: '^cns_[0-9A-HJKMNP-TV-Z]{26}$'
+      responses:
+        '200':
+          description: Fulfilments page
+          content:
+            application/json:
+              schema:
+                $ref: ./fulfilments.schemas.yaml#/components/schemas/FulfilmentListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: recordFulfilment
+      tags: [Fulfilments]
+      summary: Record fulfilment evidence for a consent
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./fulfilments.schemas.yaml#/components/schemas/FulfilmentRecordRequest
+      responses:
+        '201':
+          description: Fulfilment recorded
+          content:
+            application/json:
+              schema:
+                $ref: ./fulfilments.schemas.yaml#/components/schemas/FulfilmentResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/fulfilments/{fulfilmentId}:
+    parameters:
+      - name: fulfilmentId
+        in: path
+        required: true
+        schema:
+          $ref: ./fulfilments.schemas.yaml#/components/schemas/FulfilmentId
+    get:
+      operationId: getFulfilment
+      tags: [Fulfilments]
+      summary: Get fulfilment proof
+      responses:
+        '200':
+          description: Fulfilment proof
+          content:
+            application/json:
+              schema:
+                $ref: ./fulfilments.schemas.yaml#/components/schemas/FulfilmentResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/fulfilments/{fulfilmentId}/retry:
+    parameters:
+      - name: fulfilmentId
+        in: path
+        required: true
+        schema:
+          $ref: ./fulfilments.schemas.yaml#/components/schemas/FulfilmentId
+    post:
+      operationId: retryFulfilment
+      tags: [Fulfilments]
+      summary: Retry a failed fulfilment
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      responses:
+        '200':
+          description: Retry accepted
+          content:
+            application/json:
+              schema:
+                $ref: ./fulfilments.schemas.yaml#/components/schemas/FulfilmentResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/offers/{offerId}/freeze-collection:
+    parameters:
+      - name: offerId
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^ofr_[0-9A-HJKMNP-TV-Z]{26}$'
+    post:
+      operationId: freezeOfferCollection
+      tags: [Fulfilments]
+      summary: Freeze further collection for an offer after fulfilment failure
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: ./fulfilments.schemas.yaml#/components/schemas/FreezeCollectionRequest
+      responses:
+        '200':
+          description: Collection frozen
+          content:
+            application/json:
+              schema:
+                $ref: ./fulfilments.schemas.yaml#/components/schemas/FreezeCollectionResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

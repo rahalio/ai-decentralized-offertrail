@@ -1,0 +1,43 @@
+{
+  "name": "offertrail",
+  "version": "0.1.0",
+  "description": "Offertrail — OpenAPI-first DDD monorepo (journey offer studio)",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:openapi": "pnpm --filter @offertrail/openapi-core lint:domains",
+    "bundle:openapi": "pnpm --filter @offertrail/openapi-core bundle:domains",
+    "build": "pnpm --filter @offertrail/core build && pnpm --filter @offertrail/services build && pnpm --filter @offertrail/adapters build && pnpm --filter @offertrail/api-server build",
+    "dev:api": "pnpm --filter @offertrail/api-server dev",
+    "codegen:core": "node scripts/sync-codegen-paths.mjs && PYTHONPATH=.codegen/codegen/src python3 -m zero_codegen.cli.main generate --all --layers core --config .codegen/.zero-codegen-merged.json --skip-build",
+    "codegen:identity": "node scripts/sync-codegen-paths.mjs && PYTHONPATH=.codegen/codegen/src python3 -m zero_codegen.cli.main generate --domain identity --config .codegen/.zero-codegen-merged.json --skip-build",
+    "codegen:journeys": "node scripts/sync-codegen-paths.mjs && PYTHONPATH=.codegen/codegen/src python3 -m zero_codegen.cli.main generate --domain journeys --config .codegen/.zero-codegen-merged.json --skip-build",
+    "codegen:offers": "node scripts/sync-codegen-paths.mjs && PYTHONPATH=.codegen/codegen/src python3 -m zero_codegen.cli.main generate --domain offers --config .codegen/.zero-codegen-merged.json --skip-build",
+    "codegen:consents": "node scripts/sync-codegen-paths.mjs && PYTHONPATH=.codegen/codegen/src python3 -m zero_codegen.cli.main generate --domain consents --config .codegen/.zero-codegen-merged.json --skip-build",
+    "codegen:fulfilments": "node scripts/sync-codegen-paths.mjs && PYTHONPATH=.codegen/codegen/src python3 -m zero_codegen.cli.main generate --domain fulfilments --config .codegen/.zero-codegen-merged.json --skip-build",
+    "codegen:incidents": "node scripts/sync-codegen-paths.mjs && PYTHONPATH=.codegen/codegen/src python3 -m zero_codegen.cli.main generate --domain incidents --config .codegen/.zero-codegen-merged.json --skip-build",
+    "codegen:reporting": "node scripts/sync-codegen-paths.mjs && PYTHONPATH=.codegen/codegen/src python3 -m zero_codegen.cli.main generate --domain reporting --config .codegen/.zero-codegen-merged.json --skip-build",
+    "codegen:all": "node scripts/sync-codegen-paths.mjs && PYTHONPATH=.codegen/codegen/src python3 -m zero_codegen.cli.main generate --all --config .codegen/.zero-codegen-merged.json --skip-build",
+    "codegen:paths": "node scripts/sync-codegen-paths.mjs",
+    "dev:web": "pnpm --filter @offertrail/webapp dev"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.55.0"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@redocly/cli"
+    ]
+  }
+}

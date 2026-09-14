@@ -1,0 +1,118 @@
+openapi: 3.1.0
+info:
+  title: Fulfilments schemas
+  version: 0.1.0
+  description: Promised value delivery evidence tied to consent events.
+paths: {}
+components:
+  schemas:
+    FulfilmentId:
+      type: string
+      pattern: '^ful_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    FulfilmentType:
+      type: string
+      enum: [coupon_issued, service_unlocked, discount_applied]
+
+    FulfilmentStatus:
+      type: string
+      enum: [pending, fulfilled, failed]
+
+    FulfilmentProof:
+      type: object
+      required: [id, consentId, offerId, fulfilmentType, status, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/FulfilmentId'
+        consentId:
+          type: string
+          pattern: '^cns_[0-9A-HJKMNP-TV-Z]{26}$'
+        offerId:
+          type: string
+          pattern: '^ofr_[0-9A-HJKMNP-TV-Z]{26}$'
+        fulfilmentType:
+          $ref: '#/components/schemas/FulfilmentType'
+        status:
+          $ref: '#/components/schemas/FulfilmentStatus'
+        evidenceRef:
+          type: string
+        failureReason:
+          type: string
+        fulfilledAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    FulfilmentRecordRequest:
+      type: object
+      required: [consentId, fulfilmentType, evidenceRef]
+      properties:
+        consentId:
+          type: string
+          pattern: '^cns_[0-9A-HJKMNP-TV-Z]{26}$'
+        fulfilmentType:
+          $ref: '#/components/schemas/FulfilmentType'
+        evidenceRef:
+          type: string
+          minLength: 1
+        fulfilledAt:
+          type: string
+          format: date-time
+
+    FreezeCollectionRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+
+    FulfilmentListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FulfilmentProof'
+        nextCursor:
+          type: string
+
+    FulfilmentResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/FulfilmentProof'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    FulfilmentListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/FulfilmentListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    FreezeCollectionResult:
+      type: object
+      required: [offerId, collectionFrozen]
+      properties:
+        offerId:
+          type: string
+          pattern: '^ofr_[0-9A-HJKMNP-TV-Z]{26}$'
+        collectionFrozen:
+          type: boolean
+        reason:
+          type: string
+
+    FreezeCollectionResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/FreezeCollectionResult'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta

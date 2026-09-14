@@ -1,0 +1,32 @@
+apis:
+  identity:
+    root: src/identity.yaml
+  journeys:
+    root: src/journeys.yaml
+  offers:
+    root: src/offers.yaml
+  consents:
+    root: src/consents.yaml
+  fulfilments:
+    root: src/fulfilments.yaml
+  incidents:
+    root: src/incidents.yaml
+  reporting:
+    root: src/reporting.yaml
+
+extends:
+  - recommended
+
+rules:
+  no-unused-components: off
+  operation-4xx-response: warn
+  info-license: off
+  info-license-url: off
+  tag-description: off
+  operation-operationId: error
+  no-invalid-media-type-examples: off
+
+theme:
+  openapi:
+    generateCodeSamples:
+      languages: []

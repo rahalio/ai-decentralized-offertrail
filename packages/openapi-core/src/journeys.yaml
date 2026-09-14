@@ -1,0 +1,151 @@
+openapi: 3.1.0
+info:
+  title: Journeys API
+  version: 0.1.0
+  description: |
+    Priority customer journeys — the programme spine for data-for-value offers (BR-8).
+  license:
+    name: Proprietary
+    url: https://offertrail.local/license
+  x-domain: jrn
+servers:
+  - url: https://api.offertrail.local
+    description: Local / Offertrail API
+security:
+  - apiKey: []
+tags:
+  - name: Journeys
+    description: Priority journeys and journey-scoped catalogues
+paths:
+  /v1/journeys:
+    get:
+      operationId: listJourneys
+      tags: [Journeys]
+      summary: List priority journeys
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: status
+          in: query
+          schema:
+            $ref: ./journeys.schemas.yaml#/components/schemas/JourneyStatus
+      responses:
+        '200':
+          description: Journeys page
+          content:
+            application/json:
+              schema:
+                $ref: ./journeys.schemas.yaml#/components/schemas/JourneyListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: createJourney
+      tags: [Journeys]
+      summary: Create a priority journey
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./journeys.schemas.yaml#/components/schemas/JourneyCreate
+      responses:
+        '201':
+          description: Journey created
+          content:
+            application/json:
+              schema:
+                $ref: ./journeys.schemas.yaml#/components/schemas/JourneyResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/journeys/{journeyId}:
+    parameters:
+      - name: journeyId
+        in: path
+        required: true
+        schema:
+          $ref: ./journeys.schemas.yaml#/components/schemas/JourneyId
+    get:
+      operationId: getJourney
+      tags: [Journeys]
+      summary: Get a journey
+      responses:
+        '200':
+          description: Journey
+          content:
+            application/json:
+              schema:
+                $ref: ./journeys.schemas.yaml#/components/schemas/JourneyResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    patch:
+      operationId: updateJourney
+      tags: [Journeys]
+      summary: Update journey metadata, owners, or status
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./journeys.schemas.yaml#/components/schemas/JourneyUpdate
+      responses:
+        '200':
+          description: Journey updated
+          content:
+            application/json:
+              schema:
+                $ref: ./journeys.schemas.yaml#/components/schemas/JourneyResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/journeys/{journeyId}/archive:
+    parameters:
+      - name: journeyId
+        in: path
+        required: true
+        schema:
+          $ref: ./journeys.schemas.yaml#/components/schemas/JourneyId
+    post:
+      operationId: archiveJourney
+      tags: [Journeys]
+      summary: Archive a journey
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      responses:
+        '200':
+          description: Journey archived
+          content:
+            application/json:
+              schema:
+                $ref: ./journeys.schemas.yaml#/components/schemas/JourneyResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

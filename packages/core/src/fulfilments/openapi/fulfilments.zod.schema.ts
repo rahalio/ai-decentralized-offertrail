@@ -1,0 +1,628 @@
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
+import { z } from 'zod';
+
+const recordFulfilment_Body = z
+  .object({
+    consentId: z.string().regex(/^cns_[0-9A-HJKMNP-TV-Z]{26}$/),
+    fulfilmentType: z.enum([
+      'coupon_issued',
+      'service_unlocked',
+      'discount_applied',
+    ]),
+    evidenceRef: z.string().min(1),
+    fulfilledAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const FulfilmentStatus = z.enum(['pending', 'fulfilled', 'failed']);
+const Problem = z
+  .object({
+    type: z.string().url(),
+    title: z.string(),
+    status: z.number().int(),
+    detail: z.string(),
+    instance: z.string().url(),
+    code: z.string(),
+  })
+  .partial()
+  .passthrough();
+const FulfilmentId = z.string();
+const FulfilmentType = z.enum([
+  'coupon_issued',
+  'service_unlocked',
+  'discount_applied',
+]);
+const FulfilmentProof = z
+  .object({
+    id: z.string().regex(/^ful_[0-9A-HJKMNP-TV-Z]{26}$/),
+    consentId: z.string().regex(/^cns_[0-9A-HJKMNP-TV-Z]{26}$/),
+    offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+    fulfilmentType: z.enum([
+      'coupon_issued',
+      'service_unlocked',
+      'discount_applied',
+    ]),
+    status: z.enum(['pending', 'fulfilled', 'failed']),
+    evidenceRef: z.string().optional(),
+    failureReason: z.string().optional(),
+    fulfilledAt: z.string().datetime({ offset: true }).optional(),
+    createdAt: z.string().datetime({ offset: true }),
+  })
+  .passthrough();
+const FulfilmentListData = z
+  .object({
+    items: z.array(
+      z
+        .object({
+          id: z.string().regex(/^ful_[0-9A-HJKMNP-TV-Z]{26}$/),
+          consentId: z.string().regex(/^cns_[0-9A-HJKMNP-TV-Z]{26}$/),
+          offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+          fulfilmentType: z.enum([
+            'coupon_issued',
+            'service_unlocked',
+            'discount_applied',
+          ]),
+          status: z.enum(['pending', 'fulfilled', 'failed']),
+          evidenceRef: z.string().optional(),
+          failureReason: z.string().optional(),
+          fulfilledAt: z.string().datetime({ offset: true }).optional(),
+          createdAt: z.string().datetime({ offset: true }),
+        })
+        .passthrough()
+    ),
+    nextCursor: z.string().optional(),
+  })
+  .passthrough();
+const ResponseMeta = z
+  .object({
+    requestId: z.string().uuid(),
+    correlationId: z.string(),
+    generatedAt: z.string().datetime({ offset: true }),
+  })
+  .partial()
+  .passthrough();
+const FulfilmentListResponse = z
+  .object({
+    data: z
+      .object({
+        items: z.array(
+          z
+            .object({
+              id: z.string().regex(/^ful_[0-9A-HJKMNP-TV-Z]{26}$/),
+              consentId: z.string().regex(/^cns_[0-9A-HJKMNP-TV-Z]{26}$/),
+              offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+              fulfilmentType: z.enum([
+                'coupon_issued',
+                'service_unlocked',
+                'discount_applied',
+              ]),
+              status: z.enum(['pending', 'fulfilled', 'failed']),
+              evidenceRef: z.string().optional(),
+              failureReason: z.string().optional(),
+              fulfilledAt: z.string().datetime({ offset: true }).optional(),
+              createdAt: z.string().datetime({ offset: true }),
+            })
+            .passthrough()
+        ),
+        nextCursor: z.string().optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const FulfilmentRecordRequest = z
+  .object({
+    consentId: z.string().regex(/^cns_[0-9A-HJKMNP-TV-Z]{26}$/),
+    fulfilmentType: z.enum([
+      'coupon_issued',
+      'service_unlocked',
+      'discount_applied',
+    ]),
+    evidenceRef: z.string().min(1),
+    fulfilledAt: z.string().datetime({ offset: true }).optional(),
+  })
+  .passthrough();
+const FulfilmentResponse = z
+  .object({
+    data: z
+      .object({
+        id: z.string().regex(/^ful_[0-9A-HJKMNP-TV-Z]{26}$/),
+        consentId: z.string().regex(/^cns_[0-9A-HJKMNP-TV-Z]{26}$/),
+        offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+        fulfilmentType: z.enum([
+          'coupon_issued',
+          'service_unlocked',
+          'discount_applied',
+        ]),
+        status: z.enum(['pending', 'fulfilled', 'failed']),
+        evidenceRef: z.string().optional(),
+        failureReason: z.string().optional(),
+        fulfilledAt: z.string().datetime({ offset: true }).optional(),
+        createdAt: z.string().datetime({ offset: true }),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const FreezeCollectionRequest = z
+  .object({ reason: z.string() })
+  .partial()
+  .passthrough();
+const FreezeCollectionResult = z
+  .object({
+    offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+    collectionFrozen: z.boolean(),
+    reason: z.string().optional(),
+  })
+  .passthrough();
+const FreezeCollectionResponse = z
+  .object({
+    data: z
+      .object({
+        offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+        collectionFrozen: z.boolean(),
+        reason: z.string().optional(),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+export const schemas: any = {
+  recordFulfilment_Body,
+  FulfilmentStatus,
+  Problem,
+  FulfilmentId,
+  FulfilmentType,
+  FulfilmentProof,
+  FulfilmentListData,
+  ResponseMeta,
+  FulfilmentListResponse,
+  FulfilmentRecordRequest,
+  FulfilmentResponse,
+  FreezeCollectionRequest,
+  FreezeCollectionResult,
+  FreezeCollectionResponse,
+};
+
+const endpoints = makeApi([
+  {
+    method: 'get',
+    path: '/v1/fulfilments',
+    alias: 'listFulfilments',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'cursor',
+        type: 'Query',
+        schema: z.string().optional(),
+      },
+      {
+        name: 'limit',
+        type: 'Query',
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+      {
+        name: 'status',
+        type: 'Query',
+        schema: z.enum(['pending', 'fulfilled', 'failed']).optional(),
+      },
+      {
+        name: 'offerId',
+        type: 'Query',
+        schema: z
+          .string()
+          .regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/)
+          .optional(),
+      },
+      {
+        name: 'consentId',
+        type: 'Query',
+        schema: z
+          .string()
+          .regex(/^cns_[0-9A-HJKMNP-TV-Z]{26}$/)
+          .optional(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            items: z.array(
+              z
+                .object({
+                  id: z.string().regex(/^ful_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  consentId: z.string().regex(/^cns_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  fulfilmentType: z.enum([
+                    'coupon_issued',
+                    'service_unlocked',
+                    'discount_applied',
+                  ]),
+                  status: z.enum(['pending', 'fulfilled', 'failed']),
+                  evidenceRef: z.string().optional(),
+                  failureReason: z.string().optional(),
+                  fulfilledAt: z.string().datetime({ offset: true }).optional(),
+                  createdAt: z.string().datetime({ offset: true }),
+                })
+                .passthrough()
+            ),
+            nextCursor: z.string().optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/fulfilments',
+    alias: 'recordFulfilment',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: recordFulfilment_Body,
+      },
+      {
+        name: 'Idempotency-Key',
+        type: 'Header',
+        schema: z.string().min(1).max(128),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string().regex(/^ful_[0-9A-HJKMNP-TV-Z]{26}$/),
+            consentId: z.string().regex(/^cns_[0-9A-HJKMNP-TV-Z]{26}$/),
+            offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+            fulfilmentType: z.enum([
+              'coupon_issued',
+              'service_unlocked',
+              'discount_applied',
+            ]),
+            status: z.enum(['pending', 'fulfilled', 'failed']),
+            evidenceRef: z.string().optional(),
+            failureReason: z.string().optional(),
+            fulfilledAt: z.string().datetime({ offset: true }).optional(),
+            createdAt: z.string().datetime({ offset: true }),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 400,
+        description: `Malformed request`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/fulfilments/:fulfilmentId',
+    alias: 'getFulfilment',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'fulfilmentId',
+        type: 'Path',
+        schema: z.string().regex(/^ful_[0-9A-HJKMNP-TV-Z]{26}$/),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string().regex(/^ful_[0-9A-HJKMNP-TV-Z]{26}$/),
+            consentId: z.string().regex(/^cns_[0-9A-HJKMNP-TV-Z]{26}$/),
+            offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+            fulfilmentType: z.enum([
+              'coupon_issued',
+              'service_unlocked',
+              'discount_applied',
+            ]),
+            status: z.enum(['pending', 'fulfilled', 'failed']),
+            evidenceRef: z.string().optional(),
+            failureReason: z.string().optional(),
+            fulfilledAt: z.string().datetime({ offset: true }).optional(),
+            createdAt: z.string().datetime({ offset: true }),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/fulfilments/:fulfilmentId/retry',
+    alias: 'retryFulfilment',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'fulfilmentId',
+        type: 'Path',
+        schema: z.string().regex(/^ful_[0-9A-HJKMNP-TV-Z]{26}$/),
+      },
+      {
+        name: 'Idempotency-Key',
+        type: 'Header',
+        schema: z.string().min(1).max(128),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            id: z.string().regex(/^ful_[0-9A-HJKMNP-TV-Z]{26}$/),
+            consentId: z.string().regex(/^cns_[0-9A-HJKMNP-TV-Z]{26}$/),
+            offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+            fulfilmentType: z.enum([
+              'coupon_issued',
+              'service_unlocked',
+              'discount_applied',
+            ]),
+            status: z.enum(['pending', 'fulfilled', 'failed']),
+            evidenceRef: z.string().optional(),
+            failureReason: z.string().optional(),
+            fulfilledAt: z.string().datetime({ offset: true }).optional(),
+            createdAt: z.string().datetime({ offset: true }),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'post',
+    path: '/v1/offers/:offerId/freeze-collection',
+    alias: 'freezeOfferCollection',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'body',
+        type: 'Body',
+        schema: z
+          .object({ reason: z.string() })
+          .partial()
+          .passthrough()
+          .optional(),
+      },
+      {
+        name: 'offerId',
+        type: 'Path',
+        schema: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+      },
+      {
+        name: 'Idempotency-Key',
+        type: 'Header',
+        schema: z.string().min(1).max(128),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+            collectionFrozen: z.boolean(),
+            reason: z.string().optional(),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 404,
+        description: `Resource not found`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+]);
+
+export const api: any = new Zodios(
+  'https://api.ddd-codegen-starter.local/v1',
+  endpoints
+);
+
+export function createApiClient(baseUrl: string, options?: ZodiosOptions): any {
+  return new Zodios(baseUrl, endpoints, options);
+}

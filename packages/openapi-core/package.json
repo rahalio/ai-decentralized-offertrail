@@ -1,0 +1,18 @@
+{
+  "name": "@offertrail/openapi-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenAPI contracts for Offertrail (common + identity + product domains)",
+  "scripts": {
+    "lint:domains": "redocly lint",
+    "bundle:domains": "mkdir -p src/.bundled && redocly bundle identity --output src/.bundled/identity.openapi.yaml && redocly bundle identity --output src/.bundled/identity.json && redocly bundle journeys --output src/.bundled/journeys.openapi.yaml && redocly bundle journeys --output src/.bundled/journeys.json && redocly bundle offers --output src/.bundled/offers.openapi.yaml && redocly bundle offers --output src/.bundled/offers.json && redocly bundle consents --output src/.bundled/consents.openapi.yaml && redocly bundle consents --output src/.bundled/consents.json && redocly bundle fulfilments --output src/.bundled/fulfilments.openapi.yaml && redocly bundle fulfilments --output src/.bundled/fulfilments.json && redocly bundle incidents --output src/.bundled/incidents.openapi.yaml && redocly bundle incidents --output src/.bundled/incidents.json && redocly bundle reporting --output src/.bundled/reporting.openapi.yaml && redocly bundle reporting --output src/.bundled/reporting.json",
+    "lint": "pnpm run lint:domains",
+    "bundle": "pnpm run bundle:domains"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.34.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

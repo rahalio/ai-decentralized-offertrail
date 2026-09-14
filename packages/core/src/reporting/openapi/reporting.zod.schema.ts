@@ -1,0 +1,495 @@
+import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
+import { z } from 'zod';
+
+const Problem = z
+  .object({
+    type: z.string().url(),
+    title: z.string(),
+    status: z.number().int(),
+    detail: z.string(),
+    instance: z.string().url(),
+    code: z.string(),
+  })
+  .partial()
+  .passthrough();
+const OfferContribution = z
+  .object({
+    offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+    offerName: z.string().optional(),
+    optIns: z.number().int().gte(0).optional(),
+    revocations: z.number().int().gte(0).optional(),
+    fulfilments: z.number().int().gte(0).optional(),
+    netLawfulSharing: z.number().int().optional(),
+  })
+  .passthrough();
+const OfferPerformanceReport = z
+  .object({
+    journeyId: z
+      .string()
+      .regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/)
+      .optional(),
+    period: z.string(),
+    optInRate: z.number(),
+    revokeRate: z.number(),
+    fulfilmentRate24h: z.number(),
+    offers: z.array(
+      z
+        .object({
+          offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+          offerName: z.string().optional(),
+          optIns: z.number().int().gte(0).optional(),
+          revocations: z.number().int().gte(0).optional(),
+          fulfilments: z.number().int().gte(0).optional(),
+          netLawfulSharing: z.number().int().optional(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+const ResponseMeta = z
+  .object({
+    requestId: z.string().uuid(),
+    correlationId: z.string(),
+    generatedAt: z.string().datetime({ offset: true }),
+  })
+  .partial()
+  .passthrough();
+const OfferPerformanceResponse = z
+  .object({
+    data: z
+      .object({
+        journeyId: z
+          .string()
+          .regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/)
+          .optional(),
+        period: z.string(),
+        optInRate: z.number(),
+        revokeRate: z.number(),
+        fulfilmentRate24h: z.number(),
+        offers: z.array(
+          z
+            .object({
+              offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+              offerName: z.string().optional(),
+              optIns: z.number().int().gte(0).optional(),
+              revocations: z.number().int().gte(0).optional(),
+              fulfilments: z.number().int().gte(0).optional(),
+              netLawfulSharing: z.number().int().optional(),
+            })
+            .passthrough()
+        ),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const AuditStatement = z
+  .object({
+    period: z.string(),
+    journeyId: z
+      .string()
+      .regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/)
+      .optional(),
+    generatedAt: z.string().datetime({ offset: true }),
+    netNewLawfulSharing: z.number().int(),
+    netRevocations: z.number().int(),
+    offers: z.array(
+      z
+        .object({
+          offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+          offerName: z.string().optional(),
+          optIns: z.number().int().gte(0).optional(),
+          revocations: z.number().int().gte(0).optional(),
+          fulfilments: z.number().int().gte(0).optional(),
+          netLawfulSharing: z.number().int().optional(),
+        })
+        .passthrough()
+    ),
+    exportFormat: z.enum(['json', 'csv']).optional().default('json'),
+  })
+  .passthrough();
+const AuditStatementResponse = z
+  .object({
+    data: z
+      .object({
+        period: z.string(),
+        journeyId: z
+          .string()
+          .regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/)
+          .optional(),
+        generatedAt: z.string().datetime({ offset: true }),
+        netNewLawfulSharing: z.number().int(),
+        netRevocations: z.number().int(),
+        offers: z.array(
+          z
+            .object({
+              offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+              offerName: z.string().optional(),
+              optIns: z.number().int().gte(0).optional(),
+              revocations: z.number().int().gte(0).optional(),
+              fulfilments: z.number().int().gte(0).optional(),
+              netLawfulSharing: z.number().int().optional(),
+            })
+            .passthrough()
+        ),
+        exportFormat: z.enum(['json', 'csv']).optional().default('json'),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const JourneyCompareRow = z
+  .object({
+    journeyId: z.string().regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/),
+    journeyName: z.string(),
+    optInRate: z.number(),
+    revokeRate: z.number(),
+    fulfilmentRate24h: z.number(),
+  })
+  .passthrough();
+const JourneyCompareReport = z
+  .object({
+    period: z.string(),
+    journeys: z.array(
+      z
+        .object({
+          journeyId: z.string().regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/),
+          journeyName: z.string(),
+          optInRate: z.number(),
+          revokeRate: z.number(),
+          fulfilmentRate24h: z.number(),
+        })
+        .passthrough()
+    ),
+  })
+  .passthrough();
+const JourneyCompareResponse = z
+  .object({
+    data: z
+      .object({
+        period: z.string(),
+        journeys: z.array(
+          z
+            .object({
+              journeyId: z.string().regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/),
+              journeyName: z.string(),
+              optInRate: z.number(),
+              revokeRate: z.number(),
+              fulfilmentRate24h: z.number(),
+            })
+            .passthrough()
+        ),
+      })
+      .passthrough(),
+    meta: z
+      .object({
+        requestId: z.string().uuid(),
+        correlationId: z.string(),
+        generatedAt: z.string().datetime({ offset: true }),
+      })
+      .partial()
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+export const schemas: any = {
+  Problem,
+  OfferContribution,
+  OfferPerformanceReport,
+  ResponseMeta,
+  OfferPerformanceResponse,
+  AuditStatement,
+  AuditStatementResponse,
+  JourneyCompareRow,
+  JourneyCompareReport,
+  JourneyCompareResponse,
+};
+
+const endpoints = makeApi([
+  {
+    method: 'get',
+    path: '/v1/reports/audit-statement',
+    alias: 'getAuditStatement',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'journeyId',
+        type: 'Query',
+        schema: z
+          .string()
+          .regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/)
+          .optional(),
+      },
+      {
+        name: 'period',
+        type: 'Query',
+        schema: z.string(),
+      },
+      {
+        name: 'format',
+        type: 'Query',
+        schema: z.enum(['json', 'csv']).optional().default('json'),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            period: z.string(),
+            journeyId: z
+              .string()
+              .regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/)
+              .optional(),
+            generatedAt: z.string().datetime({ offset: true }),
+            netNewLawfulSharing: z.number().int(),
+            netRevocations: z.number().int(),
+            offers: z.array(
+              z
+                .object({
+                  offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  offerName: z.string().optional(),
+                  optIns: z.number().int().gte(0).optional(),
+                  revocations: z.number().int().gte(0).optional(),
+                  fulfilments: z.number().int().gte(0).optional(),
+                  netLawfulSharing: z.number().int().optional(),
+                })
+                .passthrough()
+            ),
+            exportFormat: z.enum(['json', 'csv']).optional().default('json'),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 400,
+        description: `Malformed request`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/reports/journey-compare',
+    alias: 'compareJourneys',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'period',
+        type: 'Query',
+        schema: z.string(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            period: z.string(),
+            journeys: z.array(
+              z
+                .object({
+                  journeyId: z.string().regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  journeyName: z.string(),
+                  optInRate: z.number(),
+                  revokeRate: z.number(),
+                  fulfilmentRate24h: z.number(),
+                })
+                .passthrough()
+            ),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 400,
+        description: `Malformed request`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+  {
+    method: 'get',
+    path: '/v1/reports/offer-performance',
+    alias: 'getOfferPerformanceReport',
+    requestFormat: 'json',
+    parameters: [
+      {
+        name: 'journeyId',
+        type: 'Query',
+        schema: z
+          .string()
+          .regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/)
+          .optional(),
+      },
+      {
+        name: 'period',
+        type: 'Query',
+        schema: z.string(),
+      },
+    ],
+    response: z
+      .object({
+        data: z
+          .object({
+            journeyId: z
+              .string()
+              .regex(/^jrn_[0-9A-HJKMNP-TV-Z]{26}$/)
+              .optional(),
+            period: z.string(),
+            optInRate: z.number(),
+            revokeRate: z.number(),
+            fulfilmentRate24h: z.number(),
+            offers: z.array(
+              z
+                .object({
+                  offerId: z.string().regex(/^ofr_[0-9A-HJKMNP-TV-Z]{26}$/),
+                  offerName: z.string().optional(),
+                  optIns: z.number().int().gte(0).optional(),
+                  revocations: z.number().int().gte(0).optional(),
+                  fulfilments: z.number().int().gte(0).optional(),
+                  netLawfulSharing: z.number().int().optional(),
+                })
+                .passthrough()
+            ),
+          })
+          .passthrough(),
+        meta: z
+          .object({
+            requestId: z.string().uuid(),
+            correlationId: z.string(),
+            generatedAt: z.string().datetime({ offset: true }),
+          })
+          .partial()
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
+    errors: [
+      {
+        status: 400,
+        description: `Malformed request`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+      {
+        status: 401,
+        description: `Missing or invalid API key`,
+        schema: z
+          .object({
+            type: z.string().url(),
+            title: z.string(),
+            status: z.number().int(),
+            detail: z.string(),
+            instance: z.string().url(),
+            code: z.string(),
+          })
+          .partial()
+          .passthrough(),
+      },
+    ],
+  },
+]);
+
+export const api: any = new Zodios(
+  'https://api.ddd-codegen-starter.local/v1',
+  endpoints
+);
+
+export function createApiClient(baseUrl: string, options?: ZodiosOptions): any {
+  return new Zodios(baseUrl, endpoints, options);
+}

@@ -1,0 +1,140 @@
+openapi: 3.1.0
+info:
+  title: Consents API
+  version: 0.1.0
+  description: |
+    Consent grant and revoke runtime. Revocation stops downstream processing
+    within SLA without destroying unrelated account access (BR-3).
+  license:
+    name: Proprietary
+    url: https://offertrail.local/license
+  x-domain: cns
+servers:
+  - url: https://api.offertrail.local
+security:
+  - apiKey: []
+tags:
+  - name: Consents
+    description: Grant, list, and revoke offer permissions
+paths:
+  /v1/consents:
+    get:
+      operationId: listConsents
+      tags: [Consents]
+      summary: List consent events
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/Cursor
+        - $ref: ./common/parameters.yaml#/components/parameters/Limit
+        - name: offerId
+          in: query
+          schema:
+            type: string
+            pattern: '^ofr_[0-9A-HJKMNP-TV-Z]{26}$'
+        - name: subjectRef
+          in: query
+          schema:
+            type: string
+          description: Lookup by pseudonymous customer reference
+      responses:
+        '200':
+          description: Consent events page
+          content:
+            application/json:
+              schema:
+                $ref: ./consents.schemas.yaml#/components/schemas/ConsentListResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+    post:
+      operationId: grantConsent
+      tags: [Consents]
+      summary: Grant consent for a live offer
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./consents.schemas.yaml#/components/schemas/ConsentGrant
+      responses:
+        '201':
+          description: Consent granted
+          content:
+            application/json:
+              schema:
+                $ref: ./consents.schemas.yaml#/components/schemas/ConsentResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '409':
+          $ref: ./common/responses.yaml#/components/responses/Conflict
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/consents/{consentId}:
+    parameters:
+      - name: consentId
+        in: path
+        required: true
+        schema:
+          $ref: ./consents.schemas.yaml#/components/schemas/ConsentId
+    get:
+      operationId: getConsent
+      tags: [Consents]
+      summary: Get consent event
+      responses:
+        '200':
+          description: Consent event
+          content:
+            application/json:
+              schema:
+                $ref: ./consents.schemas.yaml#/components/schemas/ConsentResponse
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/consents/{consentId}/revoke:
+    parameters:
+      - name: consentId
+        in: path
+        required: true
+        schema:
+          $ref: ./consents.schemas.yaml#/components/schemas/ConsentId
+    post:
+      operationId: revokeConsent
+      tags: [Consents]
+      summary: Revoke offer permission without killing unrelated account access
+      parameters:
+        - $ref: ./common/parameters.yaml#/components/parameters/IdempotencyKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./consents.schemas.yaml#/components/schemas/RevokeConsentRequest
+      responses:
+        '200':
+          description: Consent revoked; stop-processing started
+          content:
+            application/json:
+              schema:
+                $ref: ./consents.schemas.yaml#/components/schemas/RevocationResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: ./common/responses.yaml#/components/responses/NotFound
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

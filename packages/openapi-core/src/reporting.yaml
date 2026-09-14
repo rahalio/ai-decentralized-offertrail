@@ -1,0 +1,114 @@
+openapi: 3.1.0
+info:
+  title: Reporting API
+  version: 0.1.0
+  description: |
+    Opt-in, revoke, and fulfilment analytics plus exportable audit statements (BR-4, BR-10).
+  license:
+    name: Proprietary
+    url: https://offertrail.local/license
+  x-domain: rpt
+servers:
+  - url: https://api.offertrail.local
+security:
+  - apiKey: []
+tags:
+  - name: Reporting
+    description: Performance reports and audit exports
+paths:
+  /v1/reports/offer-performance:
+    get:
+      operationId: getOfferPerformanceReport
+      tags: [Reporting]
+      summary: Opt-in, revoke, and fulfilment rates by offer
+      parameters:
+        - name: journeyId
+          in: query
+          schema:
+            type: string
+            pattern: '^jrn_[0-9A-HJKMNP-TV-Z]{26}$'
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+            example: 2026-Q1
+      responses:
+        '200':
+          description: Performance report
+          content:
+            application/json:
+              schema:
+                $ref: ./reporting.schemas.yaml#/components/schemas/OfferPerformanceResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/reports/audit-statement:
+    get:
+      operationId: getAuditStatement
+      tags: [Reporting]
+      summary: Exportable period statement of net lawful sharing vs revocations
+      parameters:
+        - name: journeyId
+          in: query
+          schema:
+            type: string
+            pattern: '^jrn_[0-9A-HJKMNP-TV-Z]{26}$'
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: Audit statement
+          content:
+            application/json:
+              schema:
+                $ref: ./reporting.schemas.yaml#/components/schemas/AuditStatementResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+  /v1/reports/journey-compare:
+    get:
+      operationId: compareJourneys
+      tags: [Reporting]
+      summary: Compare opt-in / revoke / fulfilment across journeys
+      parameters:
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Journey comparison
+          content:
+            application/json:
+              schema:
+                $ref: ./reporting.schemas.yaml#/components/schemas/JourneyCompareResponse
+        '400':
+          $ref: ./common/responses.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ./common/responses.yaml#/components/responses/Unauthorized
+        default:
+          $ref: ./common/responses.yaml#/components/responses/Problem
+
+components:
+  securitySchemes:
+    apiKey:
+      $ref: ./common/security.yaml#/components/securitySchemes/apiKey

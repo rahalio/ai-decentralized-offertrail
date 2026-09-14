@@ -1,0 +1,115 @@
+openapi: 3.1.0
+info:
+  title: Consents schemas
+  version: 0.1.0
+  description: Consent grant, revoke, and stop-processing SLA status.
+paths: {}
+components:
+  schemas:
+    ConsentId:
+      type: string
+      pattern: '^cns_[0-9A-HJKMNP-TV-Z]{26}$'
+
+    ConsentStatus:
+      type: string
+      enum: [active, revoked, paused]
+
+    StopProcessingStatus:
+      type: string
+      enum: [not_required, in_progress, completed, stuck]
+      description: Downstream processor stop-processing SLA state after revoke (BR-3).
+
+    ConsentEvent:
+      type: object
+      required: [id, offerId, subjectRef, status, grantedAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/ConsentId'
+        offerId:
+          type: string
+          pattern: '^ofr_[0-9A-HJKMNP-TV-Z]{26}$'
+        subjectRef:
+          type: string
+          description: Pseudonymous CRM reference — not raw PII.
+        status:
+          $ref: '#/components/schemas/ConsentStatus'
+        channel:
+          type: string
+        grantedAt:
+          type: string
+          format: date-time
+        stopProcessingStatus:
+          $ref: '#/components/schemas/StopProcessingStatus'
+
+    ConsentGrant:
+      type: object
+      required: [offerId, subjectRef]
+      properties:
+        offerId:
+          type: string
+          pattern: '^ofr_[0-9A-HJKMNP-TV-Z]{26}$'
+        subjectRef:
+          type: string
+          minLength: 1
+        channel:
+          type: string
+
+    RevocationEvent:
+      type: object
+      required: [consentId, revokedAt, reason]
+      properties:
+        consentId:
+          $ref: '#/components/schemas/ConsentId'
+        revokedAt:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        stopProcessingStatus:
+          $ref: '#/components/schemas/StopProcessingStatus'
+
+    RevokeConsentRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+
+    ConsentListData:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsentEvent'
+        nextCursor:
+          type: string
+
+    ConsentResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ConsentEvent'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    ConsentListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/ConsentListData'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
+
+    RevocationResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/RevocationEvent'
+        meta:
+          $ref: ./common/envelopes.yaml#/components/schemas/ResponseMeta
